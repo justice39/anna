@@ -1,0 +1,52 @@
+<!--
+PASTE THESE ENTRIES INTO ios/Runner/Info.plist
+Inside the existing <dict>...</dict> block.
+
+DO NOT REPLACE THE WHOLE FILE — just add these keys.
+-->
+
+<!-- Microphone -->
+<key>NSMicrophoneUsageDescription</key>
+<string>Anna needs microphone access so you can speak your reminders naturally.</string>
+
+<!-- Speech recognition -->
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>Anna uses speech recognition to understand your reminders.</string>
+
+<!-- Background modes for CallKit + audio playback -->
+<key>UIBackgroundModes</key>
+<array>
+  <string>audio</string>
+  <string>voip</string>
+  <string>processing</string>
+  <string>remote-notification</string>
+</array>
+
+<!-- Allow custom URL scheme for Google sign-in callback -->
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleTypeRole</key>
+    <string>Editor</string>
+    <key>CFBundleURLName</key>
+    <string>anna</string>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>io.supabase.anna</string>
+    </array>
+  </dict>
+</array>
+
+<!--
+EXTRA STEPS IN XCODE (Signing & Capabilities tab):
+
+1. Add "Push Notifications" capability
+2. Add "Background Modes" capability with:
+   - Audio, AirPlay, and Picture in Picture (checked)
+   - Voice over IP (checked)
+   - Background processing (checked)
+   - Remote notifications (checked)
+3. For Critical Alerts (apply to Apple separately):
+   - Add the "Critical Alerts" entitlement after Apple grants it.
+4. App Sandbox: keep DISABLED (you're not on Mac Catalyst).
+-->

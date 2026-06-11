@@ -1,0 +1,62 @@
+name: anna
+description: Voice-first reminder assistant that calls you when it's time
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Backend
+  supabase_flutter: ^2.5.0
+
+  # State management
+  flutter_riverpod: ^2.5.0
+
+  # Local notifications + call-style alerts
+  flutter_local_notifications: ^17.2.0
+  flutter_callkit_incoming: ^2.0.4
+  android_alarm_manager_plus: ^4.0.4
+  permission_handler: ^11.3.0
+  timezone: ^0.9.4
+
+  # Voice (tap-to-talk only for v1, no wake word)
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.0.0
+  just_audio: ^0.9.40
+
+  # AI parsing via Supabase edge function
+  http: ^1.2.0
+
+  # Navigation
+  go_router: ^14.0.0
+
+  # UI
+  google_fonts: ^6.2.0
+  flutter_animate: ^4.5.0
+  cupertino_icons: ^1.0.6
+
+  # Utility
+  intl: ^0.19.0
+  uuid: ^4.4.0
+  shared_preferences: ^2.2.3
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.11
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logo/
+    - assets/sounds/

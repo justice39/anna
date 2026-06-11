@@ -1,0 +1,43 @@
+<!--
+PASTE THESE PERMISSIONS INTO android/app/src/main/AndroidManifest.xml
+Above the <application> tag.
+-->
+
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.RECORD_AUDIO"/>
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+<uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+<uses-permission android:name="android.permission.VIBRATE"/>
+<uses-permission android:name="android.permission.WAKE_LOCK"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
+<uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
+
+<!--
+INSIDE <application>, register the CallKit receiver/service:
+
+<service
+    android:name="com.hiennv.flutter_callkit_incoming.CallkitIncomingService"
+    android:enabled="true"
+    android:exported="false"
+    android:foregroundServiceType="phoneCall"/>
+
+<receiver
+    android:name="com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver"
+    android:enabled="true"
+    android:exported="false"/>
+
+<activity
+    android:name="com.hiennv.flutter_callkit_incoming.CallkitIncomingActivity"
+    android:exported="false"
+    android:launchMode="singleInstance"
+    android:showOnLockScreen="true"
+    android:showWhenLocked="true"
+    android:turnScreenOn="true"
+    android:taskAffinity=""
+    android:excludeFromRecents="true"/>
+
+Set minSdkVersion 23 in android/app/build.gradle.
+-->
