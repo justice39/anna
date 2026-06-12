@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/voice_service.dart';
@@ -39,6 +39,12 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
     });
     _s = _voice.status.listen((s) {
       if (mounted) setState(() => _status = s);
+      // When speech recognition finishes on its own, save automatically.
+      if (s == VoiceStatus.processing &&
+          _transcript.trim().isNotEmpty &&
+          !_saving) {
+        _stopAndSave();
+      }
     });
   }
 
@@ -50,8 +56,20 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
   }
 
   Future<void> _startListening() async {
-    final mic = await Permission.microphone.request();
-    if (mic != PermissionStatus.granted) return;
+    debugPrint('_startListening tapped');
+    final ready = await _voice.ensureInitialized();
+    final hasPerm = await _voice.hasPermission;
+    debugPrint('stt ready=$ready, hasPermission=$hasPerm');
+    if (!ready) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Speech recognition unavailable on this device.'),
+          ),
+        );
+      }
+      return;
+    }
 
     setState(() {
       _transcript = '';
@@ -70,9 +88,11 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
 
     if (parsed == null) {
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't understand. Try again?")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Couldn't understand. Try again?")),
+        );
+      }
       return;
     }
 
@@ -158,18 +178,30 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              Center(
-                child: Text(
-                  _statusLabel(),
-                  style: AnnaText.eyebrowGold.copyWith(letterSpacing: 3),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 24),
+                      Center(
+                        child: Text(
+                          _statusLabel(),
+                          style: AnnaText.eyebrowGold.copyWith(letterSpacing: 3),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      Center(
+                        child: PulsingOrb(
+                            active: _status == VoiceStatus.listening),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildBody(),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 30),
-              Center(child: PulsingOrb(active: _status == VoiceStatus.listening)),
-              const SizedBox(height: 24),
-              _buildBody(),
-              const Spacer(),
+              const SizedBox(height: 16),
               _buildAction(),
             ],
           ),

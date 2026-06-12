@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Anna uses speech recognition to let you create reminders by voice.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Anna uses the microphone so you can speak your reminders.</string>
 </dict>
 </plist>

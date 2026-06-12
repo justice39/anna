@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 
 import 'app.dart';
 import 'core/notification_service.dart';
@@ -11,7 +13,6 @@ import 'env.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -19,7 +20,13 @@ Future<void> main() async {
   ));
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  tz.initializeTimeZones();
+  tzdata.initializeTimeZones();
+  try {
+    final deviceTz = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(deviceTz.identifier));
+  } catch (_) {
+    tz.setLocalLocation(tz.getLocation('UTC'));
+  }
 
   await Supabase.initialize(
     url: Env.supabaseUrl,
@@ -27,8 +34,8 @@ Future<void> main() async {
   );
 
   await NotificationService.instance.init();
+  await NotificationService.instance.requestPermissions();
   await CallService.instance.init();
 
-  
-
-  runApp(const ProviderScope(child: AnnaApp()));}
+  runApp(const ProviderScope(child: AnnaApp()));
+}

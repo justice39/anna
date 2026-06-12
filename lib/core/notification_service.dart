@@ -85,6 +85,34 @@ class NotificationService {
     return false;
   }
 
+  /// TEMPORARY debug test — fires a plain notification 10s from now.
+  Future<void> debugTestFire() async {
+    final when = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10));
+    await _plugin.zonedSchedule(
+      999999,
+      'Anna test',
+      'If you see this, notifications work.',
+      when,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'anna_alerts',
+          'Anna Alerts',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
   Future<void> schedule(Reminder reminder) async {
     if (!reminder.isActive) return;
 

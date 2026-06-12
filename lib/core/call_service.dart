@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
-import 'package:uuid/uuid.dart';
 
 import '../models/reminder.dart';
+import 'notification_service.dart';
 
 /// Wraps flutter_callkit_incoming to show full-screen "incoming call" UI when
 /// a reminder fires with alert_type = 'call'.
@@ -14,7 +12,6 @@ class CallService {
   CallService._();
   static final instance = CallService._();
 
-  final _uuid = const Uuid();
   StreamSubscription? _eventSub;
 
   /// Called from main.dart on app start.
@@ -32,10 +29,9 @@ class CallService {
       id: reminder.id,
       nameCaller: 'Anna',
       appName: 'Anna',
-      avatar: 'https://i.imgur.com/anna-logo.png', // Replace with hosted logo URL
       handle: reminder.title,
-      type: 0, // 0 = audio
-      duration: 30000, // ring for 30 seconds
+      type: 0,
+      duration: 30000,
       textAccept: 'Answer',
       textDecline: 'Dismiss',
       missedCallNotification: const NotificationParams(
@@ -46,7 +42,6 @@ class CallService {
       extra: {'reminderId': reminder.id, 'title': reminder.title},
       headers: const {},
       ios: const IOSParams(
-        iconName: 'CallKitLogo',
         handleType: 'generic',
         supportsVideo: false,
         maximumCallGroups: 2,
@@ -74,18 +69,7 @@ class CallService {
         isShowFullLockedScreen: true,
       ),
     );
-
     await FlutterCallkitIncoming.showCallkitIncoming(params);
-  }
-
-  /// Native scheduling not directly supported by the package — we still
-  /// register a local-notification fallback in NotificationService. This
-  /// stub is here so callers can express intent symmetrically.
-  Future<void> scheduleCall(Reminder reminder) async {
-    if (kDebugMode) {
-      debugPrint('[CallService] schedule call for ${reminder.id} '
-          'at ${reminder.scheduledAt}');
-    }
   }
 
   Future<void> cancel(String reminderId) async {
@@ -98,14 +82,20 @@ class CallService {
 
   void _handleEvent(CallEvent? event) {
     if (event == null) return;
+    debugPrint('[CallService] event: ${event.event}');
     switch (event.event) {
       case Event.actionCallAccept:
-        // User answered — your router can navigate to the in-call screen.
+        // User answered — navigate to the in-call screen where Anna speaks.
+        final id = event.body['extra']?['reminderId'] as String? ??
+            event.body['id'] as String?;
+        if (id != null) {
+          navigatorKey.currentState?.pushNamed('/incoming-call/$id');
+        }
         break;
       case Event.actionCallDecline:
       case Event.actionCallTimeout:
       case Event.actionCallEnded:
-        // Stop ringing, record the dismissal.
+        // Ringing stops automatically; nothing else needed for v1.
         break;
       default:
         break;

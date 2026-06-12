@@ -68,17 +68,79 @@ class ReminderRepository {
     return row == null ? null : _fromRow(row);
   }
 
+  /// Local natural-language parser. Works offline, no backend needed.
   Future<Map<String, dynamic>?> parseNaturalLanguage(String text) async {
-    try {
-      final response = await _client.functions.invoke(
-        'parse-reminder',
-        body: {'text': text, 'timezone': DateTime.now().timeZoneName},
-      );
-      if (response.status != 200) return null;
-      return response.data as Map<String, dynamic>;
-    } catch (e) {
-      return null;
+    final lower = text.toLowerCase().trim();
+    if (lower.isEmpty) return null;
+
+    final now = DateTime.now();
+    DateTime? when;
+    String recurrence = 'none';
+
+    // alert type: "call me" / "call" => call, else alert
+    final alertType = lower.contains('call') ? 'call' : 'alert';
+
+    // recurrence
+    if (lower.contains('every day') || lower.contains('daily')) {
+      recurrence = 'daily';
+    } else if (lower.contains('weekday')) {
+      recurrence = 'weekdays';
+    } else if (lower.contains('every week') || lower.contains('weekly')) {
+      recurrence = 'weekly';
     }
+
+    // "in X minutes/hours"
+    final inMatch =
+        RegExp(r'in (\d+)\s*(minute|min|hour|hr)').firstMatch(lower);
+    if (inMatch != null) {
+      final amount = int.parse(inMatch.group(1)!);
+      final unit = inMatch.group(2)!;
+      when = unit.startsWith('h')
+          ? now.add(Duration(hours: amount))
+          : now.add(Duration(minutes: amount));
+    }
+
+    // "at 3pm" / "at 9am" / "at 3:30pm"
+    if (when == null) {
+      final atMatch =
+          RegExp(r'at (\d{1,2})(?::(\d{2}))?\s*(am|pm)?').firstMatch(lower);
+      if (atMatch != null) {
+        var hour = int.parse(atMatch.group(1)!);
+        final minute =
+            atMatch.group(2) != null ? int.parse(atMatch.group(2)!) : 0;
+        final period = atMatch.group(3);
+        if (period == 'pm' && hour < 12) hour += 12;
+        if (period == 'am' && hour == 12) hour = 0;
+
+        var candidate = DateTime(now.year, now.month, now.day, hour, minute);
+        if (lower.contains('tomorrow') || candidate.isBefore(now)) {
+          candidate = candidate.add(const Duration(days: 1));
+        }
+        when = candidate;
+      }
+    }
+
+    // fallback: 1 hour from now if no time found
+    when ??= now.add(const Duration(hours: 1));
+
+    // build a clean title
+    var title = text.trim();
+    title = title.replaceAll(
+        RegExp(
+            r'(remind me to|remind me|call me to|call me at|call me|in \d+\s*(minutes?|mins?|hours?|hrs?)|at \d{1,2}(:\d{2})?\s*(am|pm)?|every day|daily|tomorrow|weekdays?|weekly|every week)',
+            caseSensitive: false),
+        '');
+    title = title.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (title.isEmpty) title = 'Reminder';
+    title = title[0].toUpperCase() + title.substring(1);
+
+    return {
+      'title': title,
+      'notes': null,
+      'scheduled_at': when.toIso8601String(),
+      'recurrence': recurrence,
+      'alert_type': alertType,
+    };
   }
 
   Map<String, dynamic> _toRow(Reminder r, {bool includeUserId = false}) {

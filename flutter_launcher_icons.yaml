@@ -1,0 +1,6 @@
+flutter_launcher_icons:
+  image_path: "assets/icon/anna-icon-1024.png"
+  ios: true
+  android: true
+  remove_alpha_ios: true
+  background_color_ios: "#0A0C12"

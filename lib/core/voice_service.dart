@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -11,7 +10,6 @@ class VoiceService {
 
   final _stt = stt.SpeechToText();
   final _tts = FlutterTts();
-
   bool _sttReady = false;
 
   final _transcriptController = StreamController<String>.broadcast();
@@ -19,10 +17,17 @@ class VoiceService {
 
   Stream<String> get transcript => _transcriptController.stream;
   Stream<VoiceStatus> get status => _statusController.stream;
+  Future<bool> get hasPermission => _stt.hasPermission;
+
+  Future<bool> ensureInitialized() async {
+    if (!_sttReady) await init();
+    return _sttReady;
+  }
 
   Future<bool> init() async {
     _sttReady = await _stt.initialize(
       onStatus: (s) {
+        debugPrint('STT status: $s');
         if (s == 'listening') _statusController.add(VoiceStatus.listening);
         if (s == 'notListening') _statusController.add(VoiceStatus.idle);
         if (s == 'done') _statusController.add(VoiceStatus.processing);
@@ -32,22 +37,23 @@ class VoiceService {
         _statusController.add(VoiceStatus.error);
       },
     );
+    debugPrint('STT ready: $_sttReady');
 
     // Configure TTS to feel like Anna
     await _tts.setLanguage('en-GB');
     await _tts.setSpeechRate(0.45);
     await _tts.setPitch(1.05);
     await _tts.setVolume(1.0);
-
     return _sttReady;
   }
 
   Future<void> startListening() async {
     if (!_sttReady) await init();
+    debugPrint('startListening called, sttReady=$_sttReady, isListening=${_stt.isListening}');
     if (_stt.isListening) return;
-
     await _stt.listen(
       onResult: (result) {
+        debugPrint('STT result: ${result.recognizedWords}');
         _transcriptController.add(result.recognizedWords);
       },
       listenFor: const Duration(seconds: 30),
@@ -56,7 +62,6 @@ class VoiceService {
       cancelOnError: true,
       listenMode: stt.ListenMode.dictation,
     );
-
     _statusController.add(VoiceStatus.listening);
   }
 
